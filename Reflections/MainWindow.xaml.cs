@@ -41,41 +41,42 @@ namespace Reflections
 
         }
 
-        private void ListCreateReflectionBtn_Click(object sender, RoutedEventArgs e)
+        private async void ListCreateReflectionBtn_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                //long elapsedMs = ListCreateWithReflectionTime();
-                //ListCrateWithReflectionLabelFill(elapsedMs);
-                int iterationsTime = int.Parse(IterationsBox.Text);
+                ListCreateReflectionBtn.IsEnabled = false;
                 long elapsedMs = 0;
+                int iterationsTime = int.Parse(IterationsBox.Text);
 
-                Task T = Task.Run(() =>
-                {
+                elapsedMs = await TestAsync(iterationsTime, elapsedMs);
 
-
-                    Type listType = typeof(List<int>);
-
-                    var watch = Stopwatch.StartNew();
-                    for (int i = 0; i < iterationsTime; i++)
-                    {
-                        var testList = Activator.CreateInstance(listType);
-                    }
-                    elapsedMs = watch.ElapsedMilliseconds;
-                    //return elapsedMs;
-
-                });
-                T.ContinueWith((t) =>
-                {
-                    ListCrateWithReflectionLabelFill(elapsedMs);
-                }, TaskScheduler.FromCurrentSynchronizationContext());
-
+                ListCrateWithReflectionLabelFill(elapsedMs);
+                ListCreateReflectionBtn.IsEnabled = true;
 
             }
             catch (Exception ex)
             {
 
             }
+        }
+
+        private async Task<long> TestAsync(int iterationsTime, long elapsedMs)
+        {
+            await Task.Run(() =>
+            {
+                Type listType = typeof(List<int>);
+
+                var watch = Stopwatch.StartNew();
+                for (int i = 0; i < iterationsTime; i++)
+                {
+                    var testList = Activator.CreateInstance(listType);
+                }
+                elapsedMs = watch.ElapsedMilliseconds;
+            });
+
+            return elapsedMs;
+
         }
 
         private void ListAddStandardBtn_Click(object sender, RoutedEventArgs e)
