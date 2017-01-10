@@ -41,18 +41,30 @@ namespace Reflections
 
         }
 
-        private async void ListCreateReflectionBtn_Click(object sender, RoutedEventArgs e)
+        private void ListCreateReflectionBtn_Click(object sender, RoutedEventArgs e)
         {
+
+            //var task = Task.Delay(1).ContinueWith((t) =>
+            //{
+            //    Dispatcher.Invoke(() =>
+            //    {
+
+            //    });
+            //});
+
+
+            //task.Wait();
+
             try
             {
-                ListCreateReflectionBtn.IsEnabled = false;
+                //ListCreateReflectionBtn.IsEnabled = false;
                 long elapsedMs = 0;
                 int iterationsTime = int.Parse(IterationsBox.Text);
 
-                elapsedMs = await TestAsync(iterationsTime, elapsedMs);
+                elapsedMs = Task.Run(() => TestAsync(iterationsTime, elapsedMs)).Result;
 
                 ListCrateWithReflectionLabelFill(elapsedMs);
-                ListCreateReflectionBtn.IsEnabled = true;
+                // ListCreateReflectionBtn.IsEnabled = true;
 
             }
             catch (Exception ex)
@@ -61,22 +73,42 @@ namespace Reflections
             }
         }
 
+        private async void TestAsync()
+        {
+            throw new UnauthorizedAccessException();
+
+            await Task.Run(() => {
+                Thread.Sleep(2000);
+            });
+
+        }
+
         private async Task<long> TestAsync(int iterationsTime, long elapsedMs)
         {
+
+            //throw new UnauthorizedAccessException();
+
             await Task.Run(() =>
             {
-                Type listType = typeof(List<int>);
 
-                var watch = Stopwatch.StartNew();
-                for (int i = 0; i < iterationsTime; i++)
+                try
                 {
-                    var testList = Activator.CreateInstance(listType);
+                    Type listType = typeof(List<int>);
+
+                    var watch = Stopwatch.StartNew();
+                    for (int i = 0; i < iterationsTime; i++)
+                    {
+                        var testList = Activator.CreateInstance(listType);
+                    }
+                    elapsedMs = watch.ElapsedMilliseconds;
                 }
-                elapsedMs = watch.ElapsedMilliseconds;
+                catch (Exception)
+                {
+
+                }
             });
 
             return elapsedMs;
-
         }
 
         private void ListAddStandardBtn_Click(object sender, RoutedEventArgs e)
