@@ -2,7 +2,10 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Threading;
 using VendorClassV2;
 
 namespace Reflections
@@ -28,19 +31,8 @@ namespace Reflections
         {
             try
             {
-
-                int iterationsTime = int.Parse(IterationsBox.Text);
-
-                var watch = Stopwatch.StartNew();
-                for (int i = 0; i < iterationsTime; i++)
-                {
-                    var testList = new List<int>();
-                }
-                watch.Stop();
-                var elapsedMs = watch.ElapsedMilliseconds;
-
-
-                ListCreateStandardLab.Content = Calculatetime(elapsedMs);
+                long elapsedMs = ListCreateStandardTime();
+                ListCreateStandardLabelFill(elapsedMs);
             }
             catch (Exception ex)
             {
@@ -51,22 +43,29 @@ namespace Reflections
 
         private void ListCreateReflectionBtn_Click(object sender, RoutedEventArgs e)
         {
+
+            //var task = Task.Delay(1).ContinueWith((t) =>
+            //{
+            //    Dispatcher.Invoke(() =>
+            //    {
+
+            //    });
+            //});
+
+
+            //task.Wait();
+
             try
             {
-
+                //ListCreateReflectionBtn.IsEnabled = false;
+                long elapsedMs = 0;
                 int iterationsTime = int.Parse(IterationsBox.Text);
 
-                Type listType = typeof(List<int>);
+                elapsedMs = Task.Run(() => TestAsync(iterationsTime, elapsedMs)).Result;
 
-                var watch = Stopwatch.StartNew();
-                for (int i = 0; i < iterationsTime; i++)
-                {
-                    var testList = Activator.CreateInstance(listType);
-                }
-                var elapsedMs = watch.ElapsedMilliseconds;
+                ListCrateWithReflectionLabelFill(elapsedMs);
+                // ListCreateReflectionBtn.IsEnabled = true;
 
-
-                ListCreateReflectionLab.Content = Calculatetime(elapsedMs);
             }
             catch (Exception ex)
             {
@@ -74,24 +73,50 @@ namespace Reflections
             }
         }
 
+        private async void TestAsync()
+        {
+            throw new UnauthorizedAccessException();
+
+            await Task.Run(() => {
+                Thread.Sleep(2000);
+            });
+
+        }
+
+        private async Task<long> TestAsync(int iterationsTime, long elapsedMs)
+        {
+
+            //throw new UnauthorizedAccessException();
+
+            await Task.Run(() =>
+            {
+
+                try
+                {
+                    Type listType = typeof(List<int>);
+
+                    var watch = Stopwatch.StartNew();
+                    for (int i = 0; i < iterationsTime; i++)
+                    {
+                        var testList = Activator.CreateInstance(listType);
+                    }
+                    elapsedMs = watch.ElapsedMilliseconds;
+                }
+                catch (Exception)
+                {
+
+                }
+            });
+
+            return elapsedMs;
+        }
 
         private void ListAddStandardBtn_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-
-                int iterationsTime = int.Parse(IterationsBox.Text);
-
-                var list = new List<int>();
-
-                var watch = Stopwatch.StartNew();
-                for (int i = 0; i < iterationsTime; i++)
-                {
-                    list.Add(i);
-                }
-                var elapsedMs = watch.ElapsedMilliseconds;
-
-                ListAddStandardStd.Content = Calculatetime(elapsedMs);
+                long elapsedMs = ListAddStandardTime();
+                ListAddStandardLabelFill(elapsedMs);
             }
             catch (Exception ex)
             {
@@ -99,28 +124,12 @@ namespace Reflections
             }
         }
 
-
         private void ListAddReflectionBtn_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-
-                int iterationsTime = int.Parse(IterationsBox.Text);
-
-                var list = new List<int>();
-
-                Type listType = typeof(List<int>);
-                Type[] parametersType = { typeof(int) };
-                MethodInfo mi = listType.GetMethod("Add", parametersType);
-
-                var watch = Stopwatch.StartNew();
-                for (int i = 0; i < iterationsTime; i++)
-                {
-                    mi.Invoke(list, new object[] { i });
-                }
-                var elapsedMs = watch.ElapsedMilliseconds;
-
-                ListAddReflectionStd.Content = Calculatetime(elapsedMs);
+                long elapsedMs = ListAddReflectionTime();
+                ListAddReflectionLabelFill(elapsedMs);
             }
             catch (Exception ex)
             {
@@ -162,6 +171,91 @@ namespace Reflections
             return elapsedMs + " m/s";
         }
 
+
+
+        private long ListCreateStandardTime()
+        {
+            int iterationsTime = int.Parse(IterationsBox.Text);
+
+            var watch = Stopwatch.StartNew();
+            for (int i = 0; i < iterationsTime; i++)
+            {
+                var testList = new List<int>();
+            }
+            watch.Stop();
+            var elapsedMs = watch.ElapsedMilliseconds;
+            return elapsedMs;
+        }
+
+        private long ListCreateWithReflectionTime()
+        {
+            int iterationsTime = int.Parse(IterationsBox.Text);
+
+            Type listType = typeof(List<int>);
+
+            var watch = Stopwatch.StartNew();
+            for (int i = 0; i < iterationsTime; i++)
+            {
+                var testList = Activator.CreateInstance(listType);
+            }
+            var elapsedMs = watch.ElapsedMilliseconds;
+            return elapsedMs;
+        }
+
+
+        private long ListAddStandardTime()
+        {
+            int iterationsTime = int.Parse(IterationsBox.Text);
+
+            var list = new List<int>();
+
+            var watch = Stopwatch.StartNew();
+            for (int i = 0; i < iterationsTime; i++)
+            {
+                list.Add(i);
+            }
+            var elapsedMs = watch.ElapsedMilliseconds;
+            return elapsedMs;
+        }
+
+        private long ListAddReflectionTime()
+        {
+            int iterationsTime = int.Parse(IterationsBox.Text);
+
+            var list = new List<int>();
+
+            Type listType = typeof(List<int>);
+            Type[] parametersType = { typeof(int) };
+            MethodInfo mi = listType.GetMethod("Add", parametersType);
+
+            var watch = Stopwatch.StartNew();
+            for (int i = 0; i < iterationsTime; i++)
+            {
+                mi.Invoke(list, new object[] { i });
+            }
+            var elapsedMs = watch.ElapsedMilliseconds;
+            return elapsedMs;
+        }
+
+        private void ListAddStandardLabelFill(long elapsedMs)
+        {
+            ListAddStandardStd.Content = Calculatetime(elapsedMs);
+        }
+
+        private void ListCreateStandardLabelFill(long elapsedMs)
+        {
+            ListCreateStandardLab.Content = Calculatetime(elapsedMs);
+        }
+
+        private void ListCrateWithReflectionLabelFill(long elapsedMs)
+        {
+            ListCreateReflectionLab.Content = Calculatetime(elapsedMs);
+        }
+
+        private void ListAddReflectionLabelFill(long elapsedMs)
+        {
+            ListAddReflectionStd.Content = Calculatetime(elapsedMs);
+        }
 
         #endregion
 
